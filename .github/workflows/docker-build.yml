@@ -21,7 +21,7 @@ jobs:
     steps:
       # 1. Checkout код - обновлено до v5 (поддерживает Node.js 24)
       - name: Checkout code
-        uses: actions/checkout@v4  # v4 уже поддерживает Node.js 24
+        uses: actions/checkout@v5  # v4 уже поддерживает Node.js 24
       
       # 2. Логин в Docker Hub - обновлено до v4 (последняя версия)
       - name: Login to Docker Hub
