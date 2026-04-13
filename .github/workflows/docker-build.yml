@@ -11,36 +11,47 @@ on:
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/devops-todo-app
   DOCKER_TAG: latest
+  # Опционально: форсируем Node.js 24 сейчас
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout код
+      # 1. Checkout код - обновлено до v5 (поддерживает Node.js 24)
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # v4 уже поддерживает Node.js 24
       
-      # 2. Логин в Docker Hub
+      # 2. Логин в Docker Hub - обновлено до v4 (последняя версия)
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4  # было v3, теперь v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      # 3. Сборка Docker образа
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} ./app
-          docker tag ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
+      # 3. Настройка Docker Buildx (опционально, но полезно)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3  # последняя версия
       
-      # 4. Push в Docker Hub
+      # 4. Сборка Docker образа с кешированием
+      - name: Build Docker image
+        uses: docker/build-push-action@v6  # последняя версия
+        with:
+          context: ./app
+          push: false  # сначала только собираем
+          tags: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      # 5. Push в Docker Hub
       - name: Push Docker image
         run: |
           docker push ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+          docker tag ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
           docker push ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
       
-      # 5. Проверка: запустим контейнер и протестируем
+      # 6. Проверка: запустим контейнер и протестируем
       - name: Test container
         run: |
           docker run -d --name test-app -p 5000:5000 ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
