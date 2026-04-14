@@ -1,0 +1,103 @@
+---
+- name: Deploy TODO application to production
+  hosts: scadtech
+  become: yes
+  vars:
+    db_user: "postgres"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') | default('secure_password_change_me') }}"
+    db_name: "todos"
+    docker_username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
+
+  tasks:
+    - name: Update apt cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages
+      package:
+        name:
+          - curl
+          - git
+          - htop
+        state: present
+
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com | sh
+      when: docker_check is failed
+
+    - name: Install Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      when: docker_check is failed
+
+    - name: Ensure user is in docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Create project directory
+      file:
+        path: "{{ project_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy nginx configuration
+      copy:
+        src: "../../nginx/nginx.conf"
+        dest: "{{ project_dir }}/nginx/nginx.conf"
+        mode: '0644'
+      notify: restart containers
+
+    - name: Deploy docker-compose.yml from template
+      template:
+        src: ../templates/docker-compose.yml.j2
+        dest: "{{ project_dir }}/docker-compose.yml"
+        mode: '0644'
+
+    - name: Pull latest Docker images
+      docker_compose:
+        project_src: "{{ project_dir }}"
+        pull: yes
+        state: present
+
+    - name: Start containers
+      docker_compose:
+        project_src: "{{ project_dir }}"
+        state: present
+        restarted: yes
+
+    - name: Wait for application to be healthy
+      uri:
+        url: "http://localhost/health"
+        method: GET
+        status_code: 200
+        timeout: 30
+      register: result
+      until: result.status == 200
+      retries: 10
+      delay: 5
+
+    - name: Display deployment info
+      debug:
+        msg: |
+          ✅ Application deployed successfully!
+          🌐 URL: http://scadtech
+          📊 Metrics: http://scadtech/metrics
+          ❤️ Health: http://scadtech/health
+
+  handlers:
+    - name: restart containers
+      docker_compose:
+        project_src: "{{ project_dir }}"
+        restarted: yes

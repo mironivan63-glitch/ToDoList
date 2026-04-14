@@ -1,0 +1,31 @@
+---
+- name: Quick update of TODO application
+  hosts: scadtech
+  become: yes
+
+  tasks:
+    - name: Pull latest Docker image
+      docker_compose:
+        project_src: "{{ project_dir }}"
+        pull: yes
+        services: app
+      
+    - name: Restart app container
+      docker_compose:
+        project_src: "{{ project_dir }}"
+        services: app
+        restarted: yes
+        state: present
+
+    - name: Check health
+      uri:
+        url: "http://localhost/health"
+        status_code: 200
+      register: health
+      until: health.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Show result
+      debug:
+        msg: "✅ Update complete! App version: {{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
