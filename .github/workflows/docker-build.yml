@@ -39,17 +39,17 @@ jobs:
         uses: docker/build-push-action@v6  # последняя версия
         with:
           context: ./app
-          push: false  # сначала только собираем
+      #    push: true  # сначала только собираем
           tags: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
       # 5. Push в Docker Hub
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
-          docker tag ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
-          docker push ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
+      #- name: Push Docker image
+      #  run: |
+      #    docker push ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+      #    docker tag ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
+      #    docker push ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
       
       # 6. Проверка: запустим контейнер и протестируем
       - name: Test container
