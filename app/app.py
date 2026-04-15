@@ -2,6 +2,7 @@ import os
 import time
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text 
 from datetime import datetime
 
 app = Flask(__name__)
