@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v6  # последняя версия
         with:
           context: ./app
-      #    push: true  # сначала только собираем
+          push: true  # сначала только собираем
           tags: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
