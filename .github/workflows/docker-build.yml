@@ -43,6 +43,7 @@ jobs:
           tags: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: true  # сборка без кэша
       
       # 5. Push в Docker Hub
       #- name: Push Docker image
