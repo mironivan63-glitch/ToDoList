@@ -93,7 +93,7 @@ def metrics():
 def health():
     # Проверка соединения с БД
     try:
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
         return jsonify({'status': 'ok', 'database': 'connected'})
     except Exception as e:
         return jsonify({'status': 'error', 'database': str(e)}), 500
