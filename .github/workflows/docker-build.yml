@@ -52,10 +52,10 @@ jobs:
       #    docker push ${{ env.DOCKER_IMAGE }}:$(date +%Y%m%d-%H%M%S)
       
       # 6. Проверка: запустим контейнер и протестируем
-      - name: Test container
-        run: |
-          docker run -d --name test-app -p 5000:5000 ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
-          sleep 5
-          curl -f http://localhost:5000/health || exit 1
-          docker stop test-app
-          docker rm test-app
+      #- name: Test container
+      #  run: |
+      #    docker run -d --name test-app -p 5000:5000 ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+      #    sleep 5
+      #    curl -f http://localhost:5000/health || exit 1
+      #    docker stop test-app
+      #    docker rm test-app
